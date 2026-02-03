@@ -1,0 +1,70 @@
+name: Build & Release Sim8086
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on any tag starting with 'v' (e.g. v1.0.0)
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # 1. Install Qt 6
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.5.0' # Or your specific version
+          host: 'linux'
+          target: 'desktop'
+          # Adjust host for mac/win automatically by the action
+
+      # 2. Configure CMake
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      # 3. Build Application
+      - name: Build
+        run: cmake --build build --config Release
+
+      # --- WINDOWS PACKAGING ---
+      - name: Package Windows
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          cd build\Release
+          windeployqt Sim8086.exe --dir .
+          7z a ../../Sim8086-Windows.zip *
+
+      # --- MAC PACKAGING ---
+      - name: Package macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          cd build
+          macdeployqt Sim8086.app -dmg
+          mv Sim8086.dmg ../Sim8086-macOS.dmg
+
+      # --- LINUX PACKAGING ---
+      - name: Package Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd build
+          # Simple Zip for Linux (AppImage is complex to set up in 1 step)
+          zip -r ../Sim8086-Linux.zip Sim8086 *
+
+      # 4. Upload Release Assets
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            Sim8086-Windows.zip
+            Sim8086-macOS.dmg
+            Sim8086-Linux.zip
