@@ -3,11 +3,11 @@ name: Build & Release Sim8086
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch: # Allows you to run this manually from the Actions tab
+      - 'v*'  # Triggers when you push a tag like v1.0.0
+  workflow_dispatch: # Allows manual triggering from GitHub UI
 
 permissions:
-  contents: write  # CRITICAL: Allows the action to upload the release
+  contents: write  # Critical for uploading assets to the Release
 
 jobs:
   build:
@@ -21,24 +21,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # --- SETUP C++ & CMAKE ---
-      - name: Setup CMake
-        uses: jwlawles/cmake-build-action@v1
-        with:
-          cmake-version: 'latest'
-
-      # --- INSTALL QT (More Reliable Method) ---
+      # --- INSTALL QT ---
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
           version: '6.5.0'
           cache: true
 
-      # --- CONFIGURE & BUILD ---
+      # --- CONFIGURE CMAKE ---
+      # CMake is pre-installed on all GitHub runners, so we just run it directly.
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build Project
+      # --- BUILD PROJECT ---
+      - name: Build
         run: cmake --build build --config Release
 
       # --- WINDOWS PACKAGING ---
@@ -65,7 +61,7 @@ jobs:
           cd build
           zip -r ../Sim8086-Linux.zip Sim8086 *
 
-      # --- UPLOAD RELEASE ---
+      # --- UPLOAD RELEASE ASSETS ---
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
