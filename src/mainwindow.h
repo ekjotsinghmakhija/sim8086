@@ -5,7 +5,7 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include "cpu8086.h"
-#include "managers/ui_manager.h"
+#include "managers/gui_manager.h"
 #include "managers/execution_manager.h"
 #include "managers/hardware_controller.h"
 

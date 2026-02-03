@@ -1,4 +1,4 @@
-#include "ui_manager.h"
+#include "gui_manager.h"
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QStyle>

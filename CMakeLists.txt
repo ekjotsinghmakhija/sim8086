@@ -17,7 +17,7 @@ set(SOURCES
     src/cpu8086.cpp
     src/cpu_exec.cpp
     src/cpu_ops.cpp
-    src/managers/ui_manager.cpp
+    src/managers/gui_manager.cpp
     src/managers/execution_manager.cpp
     src/managers/hardware_controller.cpp
     src/components/code_editor.cpp
