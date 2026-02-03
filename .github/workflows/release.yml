@@ -3,7 +3,11 @@ name: Build & Release Sim8086
 on:
   push:
     tags:
-      - 'v*' # Trigger on any tag starting with 'v' (e.g. v1.0.0)
+      - 'v*'
+  workflow_dispatch: # Allows you to run this manually from the Actions tab
+
+permissions:
+  contents: write  # CRITICAL: Allows the action to upload the release
 
 jobs:
   build:
@@ -15,23 +19,26 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 1. Install Qt 6
+      # --- SETUP C++ & CMAKE ---
+      - name: Setup CMake
+        uses: jwlawles/cmake-build-action@v1
+        with:
+          cmake-version: 'latest'
+
+      # --- INSTALL QT (More Reliable Method) ---
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: '6.5.0' # Or your specific version
-          host: 'linux'
-          target: 'desktop'
-          # Adjust host for mac/win automatically by the action
+          version: '6.5.0'
+          cache: true
 
-      # 2. Configure CMake
+      # --- CONFIGURE & BUILD ---
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-      # 3. Build Application
-      - name: Build
+      - name: Build Project
         run: cmake --build build --config Release
 
       # --- WINDOWS PACKAGING ---
@@ -56,10 +63,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cd build
-          # Simple Zip for Linux (AppImage is complex to set up in 1 step)
           zip -r ../Sim8086-Linux.zip Sim8086 *
 
-      # 4. Upload Release Assets
+      # --- UPLOAD RELEASE ---
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -68,3 +74,5 @@ jobs:
             Sim8086-Windows.zip
             Sim8086-macOS.dmg
             Sim8086-Linux.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
